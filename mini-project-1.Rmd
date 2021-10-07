@@ -23,10 +23,16 @@ install.packages("devtools")
 devtools::install_github("UBC-MDS/datateachr")
 ```
 
+Also install the `ggcorrplot` package to visualize correlation matrices.
+```
+install.packages("ggcorrplot")
+```
+
 We begin by loading the necessary packages.
 ```{r message=FALSE, warning=FALSE}
 library(datateachr) # provides the datasets
 library(tidyverse) # provides data analysis libraries, including ggplot2, dplyr, and tibble
+library(ggcorrplot) # provides visualization for correlation matrices
 ```
 
 # Task 1: Choose your favourite dataset (10 points)
@@ -160,18 +166,23 @@ The exercises I will complete are 1, 3, 4, and 8.
 # Plotting a histogram of the area_mean column
 cancer_sample %>%
   ggplot(aes(x=area_mean)) + 
-  geom_histogram(bins=20, fill="white", colour="black")
+  geom_histogram(aes(y=..density..), bins=20, colour="black", fill="white") +
+  geom_density(fill="grey", alpha=0.5) +
+  scale_color_grey() +
+  scale_fill_grey()
 ```
 
 We see that mean area of nuclei in a single image is right-skewed, with the highest number of observations around 500 units squared. 
 
-Let us also plot this histogram but coloured by diagnosis.
+Let us also plot the density curve coloured by diagnosis.
 
 ```{r}
-# Plotting a histogram of the area_mean column, coloured by diagnosis
+# Plotting a density curve of the area_mean column, shaded by diagnosis
 cancer_sample %>%
-  ggplot(aes(x=area_mean, color=diagnosis)) + 
-  geom_histogram(alpha=0.1, bins=20, position="identity")
+  ggplot(aes(x=area_mean, colour=diagnosis, fill=diagnosis)) + 
+  geom_density(alpha=0.5) +
+  scale_color_grey() +
+  scale_fill_grey() 
 ```
 
 While benign (B) breast masses tend to have a smaller area, with lower variance, malignant (M) breast masses have a larger area with greater variance.
@@ -198,33 +209,74 @@ We see that there are no missing values!
 Let's look at the relationship between `compactness_mean` and `area_mean`.
 
 ```{r}
-# Scatter plot between compactness_mean and area_mean, coloured by diagnosis
+# Scatter plot between compactness_mean and area_mean
 cancer_sample %>%
-  ggplot(aes(x = compactness_mean, y = area_mean, color = diagnosis)) + 
+  ggplot(aes(x = area_mean, y = compactness_mean)) + 
   geom_point(alpha = 0.5)
 ```
 
+The above scatter plot shows us that there is a positive correlation between `area_mean` and `compactness_mean`, with a high density of points between 0 and 0.1 compactness, and 0 and 1000 area.
 
+Let us also plot this relationship for each diagnosis.
+
+```{r}
+# Scatter plot between compactness_mean and area_mean, faceted by diagnosis
+cancer_sample %>%
+  ggplot(aes(x = area_mean, y = compactness_mean)) + 
+  facet_grid(cols=vars(diagnosis)) +
+  geom_point(alpha = 0.5)
+```
+
+Once again, we see that there is greater variation of area and compactness combinations among malignant (M) diagnoses, while benign (B) images have a smaller variance. In the benign figure, the area is centered around 500, and the compactness around 0.07, with a few clear outliers. On the other hand, in the malignant figure, the data points are much more spread out but still show an overall slight positive correlation between area and compactness. 
+
+We can use a correlation matrix to visualize the relationship between each pair of variables. For this visualization, let us only consider the mean values.
+```{r}
+mean_values <- select(cancer_sample, ends_with("_mean"))
+corr_values <- round(cor(mean_values), 1)
+ggcorrplot(corr_values, colors=c("white", "grey", "black"))
+```
 ### 2.1.4 Chosen Exercise 4 (8): Density plot of one variable
 
 *Exercise 8: Use a density plot to explore any of your variables (that are suitable for this type of plot).*
 
-TODO
+We've already looked at how the `area_mean` column is distributed. Let us now look at the `area_worst` column.
 
+```{r}
+# Plotting a histogram and density of the area_worst column
+cancer_sample %>%
+  ggplot(aes(x=area_worst)) + 
+  geom_histogram(aes(y=..density..), bins=20, colour="black", fill="white") +
+  geom_density(fill="grey", alpha=0.5) +
+  scale_color_grey() +
+  scale_fill_grey()
+```
+
+As we saw in the previous figures related to area, we see the highest density of observations with area around 500. 
+
+Let us also look at how `area_worst` differs by diagnosis.
+
+```{r}
+# Plotting a density curve of the area_worst column, shaded by diagnosis
+cancer_sample %>%
+  ggplot(aes(x=area_worst, colour=diagnosis, fill=diagnosis)) + 
+  geom_density(alpha=0.5) +
+  scale_color_grey() +
+  scale_fill_grey() 
+```
+
+As expected, we see similar results to the `area_mean` column, with benign (B) images having `area_worst` less spread out and more tightly centered than malignant (M) images. 
 
 ## 2.2 Explanation for chosen exercises
 
-**Exercise 1:** The dataset is almost entire quantitative, with each quantity describing a feature of an image of nuclei present in fine needle aspiration biopsies of breast masses. Hence, looking at the  distribution of these features will give us a better idea of which might be random, and which might have higher predictive power.
+**Exercise 1:** All variables other than `diagnosis` were quantitative, so it makes sense to look at the distributions of any of the variables. Since the outcome (`diagnosis`) is binary, it also makes sense to compare the distributions of each quantitative variable across the two outcomes.
 
-**Exercise 3:** TODO
+**Exercise 3:** The `cancer_sample` dataset contains observed measurements from images of nuclei. I thought it was important to check for missing values, since it's possible that some measurements were not recorded or could not be obtained from a single image. Thankfully, there are no missing values in our dataset.
 
-**Exercise 4:** TODO
+**Exercise 4:** As all the measurements within an observation come from the same image, it makes sense to look at the relationships between those measurements. For instance, looking at the relationship between `area_mean` and `compactness_mean` across each outcome can give us an idea of what benign tissue masses might look like, compared to malignant. Constructing a correlation matrix to show the relationship between each pair of variables would also be helpful in understanding how the measurements relate to one another.
 
-**Exercise 8:** TODO
+**Exercise 8:** All variables other than `diagnosis` are continuous in nature, so creating a density plot for any of them makes sense to visualize the distribution. 
 
 # Task 3: Write your research questions (5 points)
-
-TODO: these aren't finalized
 
 1. What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
 2. What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
