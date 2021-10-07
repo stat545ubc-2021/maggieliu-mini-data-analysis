@@ -235,6 +235,7 @@ mean_values <- select(cancer_sample, ends_with("_mean"))
 corr_values <- round(cor(mean_values), 1)
 ggcorrplot(corr_values, colors=c("white", "grey", "black"))
 ```
+
 ### 2.1.4 Chosen Exercise 4 (8): Density plot of one variable
 
 *Exercise 8: Use a density plot to explore any of your variables (that are suitable for this type of plot).*

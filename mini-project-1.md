@@ -501,7 +501,8 @@ ggcorrplot(corr_values, colors=c("white", "grey", "black"))
 ```
 
 ![](mini-project-1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
-\#\#\# 2.1.4 Chosen Exercise 4 (8): Density plot of one variable
+
+### 2.1.4 Chosen Exercise 4 (8): Density plot of one variable
 
 *Exercise 8: Use a density plot to explore any of your variables (that
 are suitable for this type of plot).*
