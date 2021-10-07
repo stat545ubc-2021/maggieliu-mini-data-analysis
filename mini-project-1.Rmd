@@ -1,0 +1,232 @@
+---
+title: "Mini Data-Analysis Deliverable 1"
+author: "Yi Tong (Maggie) Liu"
+output: github_document
+---
+
+# Introduction
+This is **Maggie's submission for Milestone 1 of the Mini Data Analysis Project**. This notebook is based on the datasets provided by the `datateachr` package by Hayley Boyce and Jordan Bourak.
+
+The `datateachr` package provides 7 semi-tidy datasets:
+
+* `apt_buildings`: Acquired courtesy of The City of Toronto’s Open Data Portal. It currently has 3455 rows and 37 columns.
+* `building_permits`: Acquired courtesy of The City of Vancouver’s Open Data Portal. It currently has 20680 rows and 14 columns.
+* `cancer_sample`: Acquired courtesy of UCI Machine Learning Repository. It currently has 569 rows and 32 columns.
+* `flow_sample`: Acquired courtesy of The Government of Canada’s Historical Hydrometric Database. It currently has 218 rows and 7 columns.
+* `parking_meters`: Acquired courtesy of The City of Vancouver’s Open Data Portal. It currently has 10032 rows and 22 columns.
+* `steam_games`: Acquired courtesy of Kaggle. It currently has 40833 rows and 21 columns.
+* `vancouver_trees`: Acquired courtesy of The City of Vancouver’s Open Data Portal. It currently has 146611 rows and 20 columns.
+
+Running this notebook's source code requires the installation of the `datateachr` package:
+```
+install.packages("devtools")
+devtools::install_github("UBC-MDS/datateachr")
+```
+
+We begin by loading the necessary packages.
+```{r message=FALSE, warning=FALSE}
+library(datateachr) # provides the datasets
+library(tidyverse) # provides data analysis libraries, including ggplot2, dplyr, and tibble
+```
+
+# Task 1: Choose your favourite dataset (10 points)
+In this section, I will use the short descriptions of the 7 datasets and some simple exploration to determine which dataset I will use for my mini data analysis project. 
+
+## 1.1 Choosing top 4 datasets
+The 4 datasets that most appeal to me based on their short descriptions are:
+
+1. `apt_buildings`: Acquired courtesy of The City of Toronto’s Open Data Portal. It currently has 3455 rows and 37 columns.
+2. `cancer_sample`: Acquired courtesy of UCI Machine Learning Repository. It currently has 569 rows and 32 columns.
+3. `flow_sample`: Acquired courtesy of The Government of Canada’s Historical Hydrometric Database. It currently has 218 rows and 7 columns.
+4. `steam_games`: Acquired courtesy of Kaggle. It currently has 40833 rows and 21 columns.
+
+## 1.2 Exploring top 4 datasets
+In this section, we will explore the above 4 datasets: `apt_buildings`, `cancer_sample`, `flow_sample`, and `steam_games`. We will use `dplyr` to find out at least 3 attributes about each dataset to get an idea of what the data looks like. 
+
+### 1.2.1 Exploring `apt_buildings`
+First, let's `glimpse` the dataset to get an idea of what kind of information it contains.
+```{r}
+glimpse(apt_buildings)
+```
+
+`apt_buildings` has the following 3 attributes:
+
+1. It 37 columns, and 3,455 rows/observations.
+2. It has both quantitative (columns with type `dbl`) and qualitative values (columns with type `chr`).
+3. While most of the columns of type `chr` appear to be categorical (e.g., we see repeated values of "DOUBLE PANE" for the column `window_type`), it has some columns that appear to be free text and not collected as categorical data. For instance, the `bike_parking` column shows an entry with a sentence description of the bike parking, rather than strict categories.
+
+Let's take a look at the unique entries in the `bike_parking` column.
+
+```{r set-options, R.options=(width=1500)}
+apt_buildings %>%
+  select("bike_parking") %>%
+  distinct() 
+```
+
+We will have to do some string parsing to determine the number of indoor and outdoor parking spots from the `bike_storage` column!
+
+### 1.2.2 Exploring `cancer_sample`
+First, let's `glimpse` the dataset to get an idea of what kind of information it contains.
+```{r}
+glimpse(cancer_sample)
+```
+
+`cancer_sample` has the following 3 attributes:
+
+1. It has 32 columns and 569 rows. 
+2. It only has one qualitative column (`diagnosis`, with type `chr`), while the rest of them are quantitative with type `dbl`. 
+3. Each of the quantitative columns also has a corresponding standard error. For instance, `symmetry_worst` has a correpsonding `symmetry_se` value. Since we're only given the "worst", or largest of each of the physical properties of cancerous cell nuclei images, we can use the corresponding se column to get an idea of the spread of the set of values it came from. However, we also note that the dataset doesn't provide us with the number of observations for each of those properties (we don't know how many nuclei were present in the image where those "worst" observations were taken).
+
+### 1.2.3 Exploring `flow_sample`
+First, let's `glimpse` the dataset to get an idea of what kind of information it contains.
+```{r}
+glimpse(flow_sample)
+```
+
+`flow_sample` has the following 3 attributes:
+
+1. It has 7 columns and 218 rows.
+2. While has both qualitative columns (type `chr`), and quantitative columns (type `dbl`), some of the `dbl` columns could actually be categorical variables. For example, `year`, `month`, and `day` are all discrete values and not measured, whereas `flow` is measured and not categorical in nature.
+3. It appears to contain a column, `sym`, with many null values. 
+
+```{r}
+sym_values <- select(flow_sample, "sym")
+tribble(
+  ~sym_is_na, ~sym_is_not_na,
+  sum(is.na(sym_values)), sum(!is.na(sym_values))
+)
+```
+
+We see that the `sym` column is mostly null, with 119 NA values and 99 non-NA values. 
+
+### 1.2.4 Exploring `steam_games`
+First, let's `glimpse` the dataset to get an idea of what kind of information it contains.
+```{r}
+glimpse(steam_games)
+```
+
+`steam_games` has the following 3 attributes:
+
+1. It has 21 columns and 40,833 rows.
+2. It has both quantitative (e.g., `original_price`) and qualitative columns (e.g., `developer`).
+3. Right away, we notice that many of the columns of type `chr` are free-form text, such as `url` and `recent_reviews`. These values could be unique for each game `id`.
+
+## 1.3 Narrowing down top 2 datasets
+Based on the exploration in section 1.2, I found `cancer_sample` and `steam_games` most interesting.
+
+**`cancer_sample`**
+
+I Found the `cancer_sample` dataset interesting because it lends itself well to a prediction model. The outcome (`diagnosis`) is binary (either "M" for malignant or "B" for benign) and well-defined. Being able to predict the diagnosis from properties of cancerous cell images would also extremely powerful and applicable in the healthcare setting. To check whether this dataset would lend itself well to a prediction model, we can also look at the distribution of outcomes.
+
+```{r}
+cancer_sample %>%
+  group_by(diagnosis) %>%
+  count()
+```
+
+While there are many more benign diagnoses than malignant ones, the number of data points in each outcome is still high, and we could reasonably construct training and testing datasets from this. 
+
+Finally, the dataset lends itself well to correlation analyses with the large number of quantitative values. For example, we could look at the correlation between `area_mean` and `symmetry_mean` among malignant and benign tumours.
+
+**`steam_games`**
+
+I found the `steam_games` dataset interesting because it contains many free-form text features. Parsing through language data could be challenging, and I'm interested in seeing the relationships we can draw from language alone. For example, we could investigate the relationship between `recent_reviews` and `popular_tags` to find out whether certain tags are correlated with higher reviews. We could also look at whether we can predict whether a game is rated overall positive or overall negative based on its features, such as tags, description, name, and type.
+
+Additionally, visualizing language data poses challenges, as we would have to make decisions about representing language as categorical (for example, whether or not a sentence contains a certain word) or converting it to a quantitative value (for example, representing a sentence as a bag-of-words vector). 
+
+## 1.4 Final dataset choice
+
+My final dataset choice is `cancer_sample`. A research question I'm interested in answering is: Can we predict cancer diagnosis from quantitative features calculated from images of biopsies of breast masses? 
+
+# Task 2: Exploring your dataset (15 points)
+In this section, I will complete 4 of the following 8 exercises to dive deeper into my dataset using `dplyr` and `ggplot`.
+
+1. Plot the distribution of a numeric variable.
+2. Create a new variable based on other variables in your data (only if it makes sense)
+3. Investigate how many missing values there are per variable. Can you find a way to plot this?
+4. Explore the relationship between 2 variables in a plot.
+5. Filter observations in your data according to your own criteria. Think of what you'd like to explore - again, if this was the `titanic` dataset, I may want to narrow my search down to passengers born in a particular year...
+6. Use a boxplot to look at the frequency of different observations within a single variable. You can do this for more than one variable if you wish!
+7. Make a new tibble with a subset of your data, with variables and observations that you are interested in exploring.
+8. Use a density plot to explore any of your variables (that are suitable for this type of plot).
+
+## 2.1 Exercises
+The exercises I will complete are 1, 3, 4, and 8.
+
+### 2.1.1 Chosen Exercise 1 (1): Numeric value distribution
+*Exercise 1: Plot the distribution of a numeric value.*
+
+```{r}
+# Plotting a histogram of the area_mean column
+cancer_sample %>%
+  ggplot(aes(x=area_mean)) + 
+  geom_histogram(bins=20, fill="white", colour="black")
+```
+
+We see that mean area of nuclei in a single image is right-skewed, with the highest number of observations around 500 units squared. 
+
+Let us also plot this histogram but coloured by diagnosis.
+
+```{r}
+# Plotting a histogram of the area_mean column, coloured by diagnosis
+cancer_sample %>%
+  ggplot(aes(x=area_mean, color=diagnosis)) + 
+  geom_histogram(alpha=0.1, bins=20, position="identity")
+```
+
+While benign (B) breast masses tend to have a smaller area, with lower variance, malignant (M) breast masses have a larger area with greater variance.
+
+### 2.1.2 Chosen Exercise 2 (3): Missing values
+
+*Exercise 3: Investigate how many missing values there are per variable. Can you find a way to plot this?*
+
+
+```{r}
+# Count the total number of NA values in the cancer_sample dataset
+cancer_sample %>%
+  rowwise %>%
+  summarise(NA_count = sum(is.na(.))) %>%
+  sum()
+```
+
+We see that there are no missing values!
+
+### 2.1.3 Chosen Exercise 3 (4): Relationship between two variables
+
+*Exercise 4: Explore the relationship between 2 variables in a plot.*
+
+Let's look at the relationship between `compactness_mean` and `area_mean`.
+
+```{r}
+# Scatter plot between compactness_mean and area_mean, coloured by diagnosis
+cancer_sample %>%
+  ggplot(aes(x = compactness_mean, y = area_mean, color = diagnosis)) + 
+  geom_point(alpha = 0.5)
+```
+
+
+### 2.1.4 Chosen Exercise 4 (8): Density plot of one variable
+
+*Exercise 8: Use a density plot to explore any of your variables (that are suitable for this type of plot).*
+
+TODO
+
+
+## 2.2 Explanation for chosen exercises
+
+**Exercise 1:** The dataset is almost entire quantitative, with each quantity describing a feature of an image of nuclei present in fine needle aspiration biopsies of breast masses. Hence, looking at the  distribution of these features will give us a better idea of which might be random, and which might have higher predictive power.
+
+**Exercise 3:** TODO
+
+**Exercise 4:** TODO
+
+**Exercise 8:** TODO
+
+# Task 3: Write your research questions (5 points)
+
+TODO: these aren't finalized
+
+1. What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
+2. What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+3. What impact does the standard error for each measurement have on its relationship with the diagnosis?
+4. Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
