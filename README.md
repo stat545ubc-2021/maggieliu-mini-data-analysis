@@ -1,16 +1,18 @@
 # STAT545A Fall 2021 Mini Data Analysis
 
-This is Maggie Liu's repository for the STAT545A Fall 2021 Mini Data Analysis project.
+This is Maggie Liu's repository for the STAT545A Fall 2021 Mini Data Analysis project. In this project, we explore some of the datasets provided by the `datateachr` R package, choose a dataset, create visualizations related to that dataset, and run analyses on it to answer some research questions.
 
-### Milestone Tracking
+The dataset I eventually chose to analyze is `cancer_sample`. See a description of the dataset and its columns on the [UBC-MDS datateachr page](https://rdrr.io/github/UBC-MDS/datateachr/man/cancer_sample.html).
 
-Below are each of the milestones (marked with a checkbox when completed), along with a brief description of what each milestone accomplished.
+### Project Milestones
+
+Below are brief descriptions of each milestone in this project, along with a checked box if the milestone was completed.
 
 - [x] **Milestone 1** (October 9, 2021)
   - Explore datasets provided by `datateachr` package
   - Narrow down datasets of interest from 4 to 2 to 1
   - Write research questions I'd like to answer about the chosen dataset. The dataset I chose was `cancer_sample`
-- [ ] **Milestone 2** (October 16, 2021)
+- [x] **Milestone 2** (October 19, 2021)
   - Summarize data in a way that makes sense for each of the 4 research questions created in Milestone 1
   - Explore tidy and un-tidy data using my dataset, `cancer_sample`
   - Pick 2 of the 4 research questions from Milestone 1 for continued analysis in Milestone 3
