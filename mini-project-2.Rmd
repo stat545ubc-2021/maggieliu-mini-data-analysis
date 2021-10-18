@@ -1,0 +1,203 @@
+---
+title: "Mini Data-Analysis Deliverable 2"
+author: "Yi Tong (Maggie) Liu"
+output: github_document
+---
+
+# Introduction 
+
+This is **Maggie's submission for Milestone 2 of the Mini Data Analysis Project**. 
+
+**Recap:** In Milestone 1, I chose a dataset from the `datateachr` package by Hayley Boyce and Jordan Bourak. The dataset I chose wwas `cancer_sample`. The analyses in this notebook will be based on the `cancer_sample` dataset, and will aim to work towards answering my research question: *Can we predict cancer diagnosis from quantitative features calculated from images of biopsies of breast masses?*
+
+Running the source code in this notebook requires installation of the following packages: `devtools`, `datateachr`, and `tidyverse`.
+
+We begin by loading the necessary pacakages.
+
+```{r message=FALSE, warning=FALSE}
+library(datateachr) # provides the cancer_sample dataset
+library(tidyverse) # provides data analysis libraries, including ggplot2, dplyr, and tibble
+```
+
+# Task 1: Process and summarize your data (15 points)
+
+## 1.1 Research questions from Milestone 1 (2.5 points)
+
+The 4 research questions I defined in Milestone 1 were:
+
+1. What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
+2. What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+3. What impact does the standard error for each measurement have on its relationship with the diagnosis?
+4. Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
+
+## 1.2 Summarizing and graphing tasks (10 points)
+
+In this section, I'll implement one summarizing task and one graphing task for each of the research questions listed in section 1.1. The options are listed below.
+
+**Summarizing:**
+
+1. Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.
+2. Compute the number of observations for at least one of your categorical variables. Do not use the function table()!
+3. Create a categorical variable with 3 or more groups from an existing numerical variable. You can use this new variable in the other tasks! An example: age in years into “child, teen, adult, senior”.
+4. Based on two categorical variables, calculate two summary statistics of your choosing.
+
+**Graphing:**
+
+1. Create a graph out of summarized variables that has at least two geom layers.
+2. Create a graph of your choosing, make one of the axes logarithmic, and format the axes labels so that they are “pretty” or easier to read.
+3. Make a graph where it makes sense to customize the alpha transparency.
+4. Create 3 histograms out of summarized variables, with each histogram having different sized bins. Pick the “best” one and explain why it is the best.
+
+The tasks I've chosen are summarizing - 1 and graphing - 1.
+
+Before we start, let's look at a sample of the data.
+
+```{r}
+cancer_sample %>%
+  select(ends_with("_mean"), diagnosis) %>%
+  head(10)
+```
+
+### 1.2.1 Research question 1
+
+**Question:** What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
+
+**Summarizing:** (1) Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.
+
+We will compute the range (split into min and max), mean, median, variance, and interquartile range.
+```{r}
+cancer_sample %>%
+  select(diagnosis, radius_mean) %>%
+  group_by(diagnosis) %>%
+  summarise(
+    .groups="keep",
+    range_min_radius_mean=min(radius_mean),
+    range_max_radius_mean=max(radius_mean),
+    mean_radius_mean=mean(radius_mean),
+    median_radius_mean=median(radius_mean),
+    variance_radius_mean=var(radius_mean),
+    iqr_radius_mean=IQR(radius_mean)
+  ) %>%
+  column_to_rownames(var="diagnosis") %>%
+  t(.)
+```
+
+**Graphing:** (1) Create a graph out of summarized variables that has at least two geom layers.
+
+Let us look at the radius_mean column across diagnoses.
+
+```{r}
+cancer_sample %>%
+  select(diagnosis, radius_mean) %>%
+  group_by(diagnosis) %>%
+  ggplot(aes(diagnosis, radius_mean), .groups="keep") +
+  geom_boxplot(aes(color=diagnosis, fill=diagnosis), alpha=0.5) +
+  stat_summary(fun=mean, colour="black", geom="point", shape=18, size=3, show.legend=FALSE) +
+  stat_summary(fun=mean, aes(label=paste("mean: ", round(..y.., 2))), colour="black", geom="text",vjust=-0.7) +
+  xlab("Diagnosis") + 
+  ylab("Mean radius of nuclei in sample image") + 
+  ggtitle("Mean radius of nuclei in sample image by diagnosis")
+```
+
+### 1.2.2 Research question 2
+
+**Question:** What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+
+**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
+
+**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+
+### 1.2.3 Research question 3
+
+**Question:** What impact does the standard error for each measurement have on its relationship with the diagnosis?
+**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
+
+**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+
+### 1.2.4 Research question 4
+
+**Question:** Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
+
+**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
+
+**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+
+
+## 1.3 Reflecting on the summarizing and graphing tasks (2.5 points)
+
+
+# Task 2: Tidy your data (12.5 points)
+
+## 2.1 Identifying data tidy-ness (2.5 points)
+
+First let's `glimpse` the data to see what it looks like.
+
+```{r}
+glimpse(cancer_sample)
+```
+
+We have 31 numerical columns and 1 categorical column (`diagnosis`). 
+
+As we saw in Milestone 1, the dataset does not have any null values.
+
+```{r}
+# Count the total number of NA values in the cancer_sample dataset
+cancer_sample %>%
+  rowwise %>%
+  summarise(NA_count = sum(is.na(.))) %>%
+  sum()
+```
+
+Evaluating tidyness:
+
+* Each row is an observation: Each row is identified by an `ID`, and has values for each of the measurements.
+* Each column is a variable: Each column is either a measurement (the `dbl` type columns), or `ID`, or a categorical outcome (`diagnosis`).
+* Each cell is a value: As there are no NA values, and each cell is either a `dbl` or a `chr`, each cell indeed contains a value.
+
+**We conclude that our data is tidy.**
+
+## 2.2 Tidy-ing or untidy-ing the data (5 points)
+
+Since our data is already tidy, let's untidy it. We'll do this by combining the columns `area_worst` and `area_se`.
+
+**Original tidy dataset**
+
+```{r}
+# displaying columns for tidy data (original dataset)
+cancer_sample %>%
+  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
+  head(10)
+```
+
+**BEFORE: Untidy data**
+
+```{r}
+# untidying the data and displaying the new untidy column
+(cancer_sample_untidy <- cancer_sample %>%
+  unite(col="area_worst_se", c(area_worst, area_se), sep=",") %>%
+  select(c("ID", "diagnosis", "area_mean", "area_worst_se"))) %>% 
+  head(10)
+```
+
+**AFTER: Tidy data (again)**
+
+To tidy the data again, we need to:
+1. Split the `area_worst_se` column into `area_worst` and `area_se` by the `,` separator, and
+2. Convert new `area_worst` and `area_se` columns from type `chr` to `dbl`. 
+
+Note on type conversion: Since we know that there are no NA values and each entry in the `area_worst_se` column is guaranteed to be in the format `[numeric][comma][numeric]`, we can safely separate and then convert the types.
+
+```{r}
+# tidying back the untidy data
+(cancer_sample_tidy <- cancer_sample_untidy %>%
+  separate("area_worst_se", into = c("area_worst", "area_se"), sep=",") %>%
+  mutate(across(c("area_worst", "area_se"), as.numeric))) %>%
+  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
+  head(10)
+```
+
+**Explanation**
+
+Initially, our data was tidy. Then, we combined two numeric columns into one column of type `chr`. The resulting dataset was untidy because each column did not represent a single variable (our `area_worst_se` column contained two variables). The untidy column became type `chr` since we combined them with a string separator `","`. We tidy'd the data up again by separating the two variables, `area_worst` and `area_se`, into their own columns. We ensured that the two columns had the correct type by converting them from `chr` to `dbl`.
+
+## 2.3 Narrowing down research questions (5 points)
