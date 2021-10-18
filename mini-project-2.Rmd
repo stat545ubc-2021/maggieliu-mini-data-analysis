@@ -10,13 +10,15 @@ This is **Maggie's submission for Milestone 2 of the Mini Data Analysis Project*
 
 **Recap:** In Milestone 1, I chose a dataset from the `datateachr` package by Hayley Boyce and Jordan Bourak. The dataset I chose wwas `cancer_sample`. The analyses in this notebook will be based on the `cancer_sample` dataset, and will aim to work towards answering my research question: *Can we predict cancer diagnosis from quantitative features calculated from images of biopsies of breast masses?*
 
-Running the source code in this notebook requires installation of the following packages: `devtools`, `datateachr`, and `tidyverse`.
+Running the source code in this notebook requires installation of the following packages: `devtools`, `datateachr`, `tidyverse`, `caret`, and `GGally`.
 
 We begin by loading the necessary pacakages.
 
 ```{r message=FALSE, warning=FALSE}
 library(datateachr) # provides the cancer_sample dataset
 library(tidyverse) # provides data analysis libraries, including ggplot2, dplyr, and tibble
+library(GGally) # extends ggplot2 for correlation plots
+library(caret) # provides model evaluation tools
 ```
 
 # Task 1: Process and summarize your data (15 points)
@@ -48,8 +50,6 @@ In this section, I'll implement one summarizing task and one graphing task for e
 3. Make a graph where it makes sense to customize the alpha transparency.
 4. Create 3 histograms out of summarized variables, with each histogram having different sized bins. Pick the “best” one and explain why it is the best.
 
-The tasks I've chosen are summarizing - 1 and graphing - 1.
-
 Before we start, let's look at a sample of the data.
 
 ```{r}
@@ -62,9 +62,51 @@ cancer_sample %>%
 
 **Question:** What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
 
+**Summarizing:** (3) Create a categorical variable with 3 or more groups from an existing numerical variable. You can use this new variable in the other tasks! An example: age in years into “child, teen, adult, senior”.
+
+We will group the `radius_mean` into small, mediu, and large. First let's take a look at how this column is distributed.
+```{r}
+select(cancer_sample, radius_mean) %>%
+  ggplot(aes(x=radius_mean, y=..density..)) +
+  geom_histogram(color="black", fill="white", bins=30)
+```
+
+```{r}
+radius_levels <- cancer_sample %>%
+  select(diagnosis, radius_mean) %>%
+  mutate(radius_mean_level = case_when(
+    radius_mean < 12 ~ "small",
+    radius_mean < 16 ~ "medium",
+    TRUE ~ "large"
+  ))
+
+head(radius_levels, 10)
+```
+
+**Graphing:** (1) Create a graph out of summarized variables that has at least two geom layers.
+
+Let us look at the radius_mean column across diagnoses.
+
+```{r}
+cancer_sample %>%
+  select(diagnosis, radius_mean) %>%
+  group_by(diagnosis) %>%
+  ggplot(aes(diagnosis, radius_mean), .groups="keep") +
+  geom_boxplot(aes(color=diagnosis, fill=diagnosis), alpha=0.5) +
+  stat_summary(fun=mean, colour="black", geom="point", shape=18, size=3, show.legend=FALSE) + # Plot a black point for the mean
+  stat_summary(fun=mean, aes(label=paste("mean: ", round(..y.., 2))), colour="black", geom="text",vjust=-0.7) + # Label the point with the mean value
+  xlab("Diagnosis") + 
+  ylab("Mean radius of nuclei in sample image") + 
+  ggtitle("Mean radius of nuclei in sample image by diagnosis")
+```
+
+### 1.2.2 Research question 2
+
+**Question:** What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+
 **Summarizing:** (1) Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.
 
-We will compute the range (split into min and max), mean, median, variance, and interquartile range.
+We will compute the range (split into min and max), mean, median, variance, and interquartile range of the `radius_mean` column across diagnosis.
 ```{r}
 cancer_sample %>%
   select(diagnosis, radius_mean) %>%
@@ -82,49 +124,155 @@ cancer_sample %>%
   t(.)
 ```
 
-**Graphing:** (1) Create a graph out of summarized variables that has at least two geom layers.
+**Graphing:** (3) Make a graph where it makes sense to customize the alpha transparency.
 
-Let us look at the radius_mean column across diagnoses.
+We'll first look at the relationship between mean values, then look at worst values. To simplify the visualization, we will only look at following measurements: `radius`, `perimeter`, `area`, `compactness`, `smoothness`, and `symmetry`.
 
 ```{r}
-cancer_sample %>%
-  select(diagnosis, radius_mean) %>%
-  group_by(diagnosis) %>%
-  ggplot(aes(diagnosis, radius_mean), .groups="keep") +
-  geom_boxplot(aes(color=diagnosis, fill=diagnosis), alpha=0.5) +
-  stat_summary(fun=mean, colour="black", geom="point", shape=18, size=3, show.legend=FALSE) +
-  stat_summary(fun=mean, aes(label=paste("mean: ", round(..y.., 2))), colour="black", geom="text",vjust=-0.7) +
-  xlab("Diagnosis") + 
-  ylab("Mean radius of nuclei in sample image") + 
-  ggtitle("Mean radius of nuclei in sample image by diagnosis")
+cols <- c(
+  "radius",
+  "perimeter",
+  "area",
+  "compactness",
+  "smoothness",
+  "symmetry"
+)
 ```
 
-### 1.2.2 Research question 2
-
-**Question:** What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
-
-**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
-
-**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+```{r, fig.width = 12, fig.height = 10}
+for (metric in list("mean", "worst")) {
+  print(cancer_sample %>%
+    select(paste(cols, metric, sep="_"), diagnosis) %>%
+    ggpairs(
+      mapping=aes(alpha=0.3, color=diagnosis),
+      title=paste("Correlation plot between ", metric, " measurements", sep=""),
+      lower=list(combo = wrap("facethist", binwidth=0.5)),
+      progress=FALSE,
+    ) + 
+    theme(
+      axis.text.x=element_text(angle=90), 
+      axis.text.x.top=element_text(angle=45), 
+      axis.text.y=element_text(angle=0), 
+      axis.text.y.right=element_text(angle=45)
+    ))
+}
+```
 
 ### 1.2.3 Research question 3
 
 **Question:** What impact does the standard error for each measurement have on its relationship with the diagnosis?
-**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
 
-**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+**Summarizing:** (1) Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.
+
+We will compute the range (split into min and max), mean, median, variance, and interquartile range of the `radius_se` column across diagnosis.
+
+```{r}
+cancer_sample %>%
+  select(diagnosis, radius_se) %>%
+  group_by(diagnosis) %>%
+  summarise(
+    .groups="keep",
+    range_min_radius_se=min(radius_se),
+    range_max_radius_se=max(radius_se),
+    mean_radius_se=mean(radius_se),
+    median_radius_se=median(radius_se),
+    variance_radius_se=var(radius_se),
+    iqr_radius_se=IQR(radius_se)
+  ) %>%
+  column_to_rownames(var="diagnosis") %>%
+  t(.)
+```
+
+**Graphing:** (3) Make a graph where it makes sense to customize the alpha transparency.
+
+Let's see what the radius mean and radius se values for each observation look like across diagnoses. Since there are many observations, we should set the alpha transparency so that the points do not look too cluttered.
+
+```{r}
+cancer_sample %>%
+  select(ID, diagnosis, starts_with("radius")) %>%
+  ggplot(aes(x=factor(ID), y=radius_mean, color=diagnosis)) +
+  geom_point(alpha=0.5, size=2.5) +
+  geom_errorbar(aes(ymin=radius_mean-radius_se, ymax=radius_mean+radius_se), width=0.2) + 
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        # The next 2 lines are needed as axis lines don't appear otherwise
+        axis.line.x=element_line(color="black", size=0.2),
+        axis.line.y=element_line(color="black", size=0.2),
+  )
+
+```
+
+From the above graph, we see that even when we consider the radius standard error of each observation, the lower range of the malignant images only slightly overlaps with the upper range of the benign images. The malignant images clearly generally have a larger mean radius than the benign ones.
 
 ### 1.2.4 Research question 4
 
 **Question:** Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
 
-**Summarizing - 1: Compute the range, mean, and two other summary statistics of one numerical variable across the groups of one categorical variable from your data.**
+**Summarizing:** (2) Compute the number of observations for at least one of your categorical variables. Do not use the function table()!
 
-**Graphing - 1: Create a graph out of summarized variables that has at least two geom layers.**
+Let us count the number of observations with each diagnosis to get an idea of how evenly the data is distributed. An unevent distribution (e.g., 90% benign and 10% malignant observations) would make it very difficult to run any prediction models on the dataset.
 
+```{r}
+cancer_sample %>%
+  group_by(diagnosis) %>%
+  count()
+```
+
+**Graphing:** (3) Make a graph where it makes sense to customize the alpha transparency.
+
+Let's try to run a logistic regression using only the mean radius. We can plot each radius value against its probability of being malignant using a logistic regression model, and colour each observation by diagnosis.
+
+```{r}
+cancer_radius_malignancy <- cancer_sample %>%
+  mutate(is_malignant = case_when(
+    diagnosis == "M" ~ 1,
+    TRUE ~ 0
+  )) %>%
+  select(radius_mean, is_malignant)
+
+# separate into training and testing data
+set.seed(123)
+train_size = nrow(cancer_sample) * 0.7
+train_index <- sample(seq_len(nrow(cancer_radius_malignancy)), size=train_size)
+
+train_data <- cancer_radius_malignancy[train_index,]
+test_data <- cancer_radius_malignancy[-train_index,]
+
+# create the logistic regression model to predict
+# malignancy from radius
+logit <- glm(is_malignant ~ radius_mean, data = train_data, family = "binomial")
+
+# test the model on our test data
+threshold <- 0.5
+probabilities <- logit %>% predict(test_data, type="response")
+pred_classes <- ifelse(probabilities > threshold, "M", "B")
+
+# plot the radius mean against its predicted probability of being malignant
+# each point is coloured by its true malignancy
+test_data %>%
+  ggplot(aes(radius_mean, probabilities, color=is_malignant)) +
+  geom_point(alpha=0.4)
+```
+
+We see that most true malignant observations were classified as malignant with probability > 0.5, and vice versa for true benign observations.
 
 ## 1.3 Reflecting on the summarizing and graphing tasks (2.5 points)
+For reference, here are the 4 research questions:
 
+1. What are the relationships between each individual nucleus measurement and the diagnosis outcome? For example, is a larger nucleus radius positively correlated with malignant diagnosis?
+2. What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+3. What impact does the standard error for each measurement have on its relationship with the diagnosis?
+4. Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
+
+**Based on the operations that you’ve completed, how much closer are you to answering your research questions?**
+I am quite close to answering (2) and (4), through the correlation plot matrix for (2) and the simple logistic regresssion for (4). However, for (1) and (3), it was very difficult to plot each individual measurement against the diagnosis as it would require multiple plots that each need to be analyzed separately. It was  easier to focus on one observation; for (1) it was easier to focus on the relationship between the `radius_mean` and `diagnosis` only, and same goes for (3) but with `radius_se` instead.
+
+**Think about what aspects of your research questions remain unclear. Can your research questions be refined, now that you’ve investigated your data a bit more? **
+For question (2), there are many pairs of variables that are positively correlated by definiton. For example, radius and area are positively correlated by definition. So I can narrow down this question to more specific variables to compare. Intresting ones could be combinations of `smoothness`, `compactness`, `radius`, `perimeter`, `symmetry`, and `texture`.
+
+**Which research questions are yielding interesting results?**
+
+Question (4) yielded particularly interesting results. It showed us that predicting the diagnosis should be possible, since the model performed relatively well from only one measurement column (`radius_mean`), according to our visualization (keeping in mind that to truly evaluate the model, we would need precision and recall scores too). We also saw patterns in how the `radius_mean` values are distributed across diagnoses, and those patterns were also strong signals that prediction would be possible.
 
 # Task 2: Tidy your data (12.5 points)
 
@@ -201,3 +349,21 @@ Note on type conversion: Since we know that there are no NA values and each entr
 Initially, our data was tidy. Then, we combined two numeric columns into one column of type `chr`. The resulting dataset was untidy because each column did not represent a single variable (our `area_worst_se` column contained two variables). The untidy column became type `chr` since we combined them with a string separator `","`. We tidy'd the data up again by separating the two variables, `area_worst` and `area_se`, into their own columns. We ensured that the two columns had the correct type by converting them from `chr` to `dbl`.
 
 ## 2.3 Narrowing down research questions (5 points)
+
+### Two final research questions
+The two research questions I picked are:
+
+2 .What are the relationships between each pair of nucleus measurements among malignant and benign diagnoses? For example, among malignant diagnoses, what is the relationship between surface area and radius? What about among benign diagnoses?
+4. Can we accurately predict whether a diagnosis will be benign or malignant using the provided measurements from images of nuclei?
+
+### Explanation
+This is because both of these research questions allow us to look at the relationships between all the variables, grouped by diagnosis. Since the analysis for these two questions will rely on grouping by diagnosis, it will also give us clearer signals for predicting the diagnosis.
+
+### Refined dataset
+```{r}
+cancer_sample %>%
+  mutate(is_malignant = case_when(
+    diagnosis == "M" ~ 1,
+    TRUE ~ 0
+  )) # TODO
+```
