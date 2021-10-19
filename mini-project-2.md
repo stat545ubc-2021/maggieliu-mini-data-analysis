@@ -495,114 +495,146 @@ cancer_sample %>%
 
     ## [1] 0
 
+Let’s also check that the rows are all unique
+
+``` r
+is_equal <- distinct(cancer_sample) == cancer_sample
+all(is_equal) # are all values in is_equal TRUE?
+```
+
+    ## [1] TRUE
+
 Evaluating tidyness:
 
   - Each row is an observation: Each row is identified by an `ID`, and
-    has values for each of the measurements.
-  - Each column is a variable: Each column is either a measurement (the
-    `dbl` type columns), or `ID`, or a categorical outcome
-    (`diagnosis`).
+    each row is unique.
+  - Each column is a variable: All columns other than `ID` are
+    variables. `diagnosis` is a categorical variable, and each of the
+    columns ending in `_mean`, `_worst`, or `_se` are numeric variables
+    representing different measurements.
   - Each cell is a value: As there are no NA values, and each cell is
     either a `dbl` or a `chr`, each cell indeed contains a value.
 
-**We conclude that our data is tidy.**
+**We conclude that our data is untidy** due to the presence of the `ID`
+column.
 
 ## 2.2 Tidy-ing or untidy-ing the data (5 points)
 
-Since our data is already tidy, let’s untidy it. We’ll do this by
-combining the columns `area_worst` and `area_se`.
+Since our data is untidy, we will first tidy it, then untidy it back to
+its original state.
 
-**Original tidy dataset**
-
-``` r
-# displaying columns for tidy data (original dataset)
-cancer_sample %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
-  head(10)
-```
-
-    ## # A tibble: 10 × 5
-    ##          ID diagnosis area_mean area_worst area_se
-    ##       <dbl> <chr>         <dbl>      <dbl>   <dbl>
-    ##  1   842302 M             1001       2019    153. 
-    ##  2   842517 M             1326       1956     74.1
-    ##  3 84300903 M             1203       1709     94.0
-    ##  4 84348301 M              386.       568.    27.2
-    ##  5 84358402 M             1297       1575     94.4
-    ##  6   843786 M              477.       742.    27.2
-    ##  7   844359 M             1040       1606     53.9
-    ##  8 84458202 M              578.       897     51.0
-    ##  9   844981 M              520.       739.    24.3
-    ## 10 84501001 M              476.       711.    23.9
-
-**BEFORE: Untidy data**
+**BEFORE: Original untidy dataset**
 
 ``` r
-# untidying the data and displaying the new untidy column
-(cancer_sample_untidy <- cancer_sample %>%
-  unite(col="area_worst_se", c(area_worst, area_se), sep=",") %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst_se"))) %>% 
-  head(10)
+head(cancer_sample)
 ```
 
-    ## # A tibble: 10 × 4
-    ##          ID diagnosis area_mean area_worst_se
-    ##       <dbl> <chr>         <dbl> <chr>        
-    ##  1   842302 M             1001  2019,153.4   
-    ##  2   842517 M             1326  1956,74.08   
-    ##  3 84300903 M             1203  1709,94.03   
-    ##  4 84348301 M              386. 567.7,27.23  
-    ##  5 84358402 M             1297  1575,94.44   
-    ##  6   843786 M              477. 741.6,27.19  
-    ##  7   844359 M             1040  1606,53.91   
-    ##  8 84458202 M              578. 897,50.96    
-    ##  9   844981 M              520. 739.3,24.32  
-    ## 10 84501001 M              476. 711.4,23.94
+    ## # A tibble: 6 × 32
+    ##         ID diagnosis radius_mean texture_mean perimeter_mean area_mean
+    ##      <dbl> <chr>           <dbl>        <dbl>          <dbl>     <dbl>
+    ## 1   842302 M                18.0         10.4          123.      1001 
+    ## 2   842517 M                20.6         17.8          133.      1326 
+    ## 3 84300903 M                19.7         21.2          130       1203 
+    ## 4 84348301 M                11.4         20.4           77.6      386.
+    ## 5 84358402 M                20.3         14.3          135.      1297 
+    ## 6   843786 M                12.4         15.7           82.6      477.
+    ## # … with 26 more variables: smoothness_mean <dbl>, compactness_mean <dbl>,
+    ## #   concavity_mean <dbl>, concave_points_mean <dbl>, symmetry_mean <dbl>,
+    ## #   fractal_dimension_mean <dbl>, radius_se <dbl>, texture_se <dbl>,
+    ## #   perimeter_se <dbl>, area_se <dbl>, smoothness_se <dbl>,
+    ## #   compactness_se <dbl>, concavity_se <dbl>, concave_points_se <dbl>,
+    ## #   symmetry_se <dbl>, fractal_dimension_se <dbl>, radius_worst <dbl>,
+    ## #   texture_worst <dbl>, perimeter_worst <dbl>, area_worst <dbl>, …
 
-**AFTER: Tidy data (again)**
-
-To tidy the data again, we need to: 1. Split the `area_worst_se` column
-into `area_worst` and `area_se` by the `,` separator, and 2. Convert new
-`area_worst` and `area_se` columns from type `chr` to `dbl`.
-
-Note on type conversion: Since we know that there are no NA values and
-each entry in the `area_worst_se` column is guaranteed to be in the
-format `[numeric][comma][numeric]`, we can safely separate and then
-convert the types.
+**AFTER: Tidy dataset** To tidy our dataset, we will just remove the
+`ID` column.
 
 ``` r
-# tidying back the untidy data
-(cancer_sample_tidy <- cancer_sample_untidy %>%
-  separate("area_worst_se", into = c("area_worst", "area_se"), sep=",") %>%
-  mutate(across(c("area_worst", "area_se"), as.numeric))) %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
-  head(10)
+cancer_sample_tidy <- cancer_sample %>%
+  select(-ID) # select everything except ID
+head(cancer_sample_tidy)
 ```
 
-    ## # A tibble: 10 × 5
-    ##          ID diagnosis area_mean area_worst area_se
-    ##       <dbl> <chr>         <dbl>      <dbl>   <dbl>
-    ##  1   842302 M             1001       2019    153. 
-    ##  2   842517 M             1326       1956     74.1
-    ##  3 84300903 M             1203       1709     94.0
-    ##  4 84348301 M              386.       568.    27.2
-    ##  5 84358402 M             1297       1575     94.4
-    ##  6   843786 M              477.       742.    27.2
-    ##  7   844359 M             1040       1606     53.9
-    ##  8 84458202 M              578.       897     51.0
-    ##  9   844981 M              520.       739.    24.3
-    ## 10 84501001 M              476.       711.    23.9
+    ## # A tibble: 6 × 31
+    ##   diagnosis radius_mean texture_mean perimeter_mean area_mean smoothness_mean
+    ##   <chr>           <dbl>        <dbl>          <dbl>     <dbl>           <dbl>
+    ## 1 M                18.0         10.4          123.      1001           0.118 
+    ## 2 M                20.6         17.8          133.      1326           0.0847
+    ## 3 M                19.7         21.2          130       1203           0.110 
+    ## 4 M                11.4         20.4           77.6      386.          0.142 
+    ## 5 M                20.3         14.3          135.      1297           0.100 
+    ## 6 M                12.4         15.7           82.6      477.          0.128 
+    ## # … with 25 more variables: compactness_mean <dbl>, concavity_mean <dbl>,
+    ## #   concave_points_mean <dbl>, symmetry_mean <dbl>,
+    ## #   fractal_dimension_mean <dbl>, radius_se <dbl>, texture_se <dbl>,
+    ## #   perimeter_se <dbl>, area_se <dbl>, smoothness_se <dbl>,
+    ## #   compactness_se <dbl>, concavity_se <dbl>, concave_points_se <dbl>,
+    ## #   symmetry_se <dbl>, fractal_dimension_se <dbl>, radius_worst <dbl>,
+    ## #   texture_worst <dbl>, perimeter_worst <dbl>, area_worst <dbl>, …
+
+We see that `cancer_sample_tidy` has all the same data as
+`cancer_sample` but without `ID`. We can also verify this by looking at
+its columns
+
+``` r
+colnames(cancer_sample_tidy)
+```
+
+    ##  [1] "diagnosis"               "radius_mean"            
+    ##  [3] "texture_mean"            "perimeter_mean"         
+    ##  [5] "area_mean"               "smoothness_mean"        
+    ##  [7] "compactness_mean"        "concavity_mean"         
+    ##  [9] "concave_points_mean"     "symmetry_mean"          
+    ## [11] "fractal_dimension_mean"  "radius_se"              
+    ## [13] "texture_se"              "perimeter_se"           
+    ## [15] "area_se"                 "smoothness_se"          
+    ## [17] "compactness_se"          "concavity_se"           
+    ## [19] "concave_points_se"       "symmetry_se"            
+    ## [21] "fractal_dimension_se"    "radius_worst"           
+    ## [23] "texture_worst"           "perimeter_worst"        
+    ## [25] "area_worst"              "smoothness_worst"       
+    ## [27] "compactness_worst"       "concavity_worst"        
+    ## [29] "concave_points_worst"    "symmetry_worst"         
+    ## [31] "fractal_dimension_worst"
+
+**Untidying it back to original state** Since it’s not possible to
+recover the original ID values from `cancer_sample_tidy`, we will make a
+new ID column with unique values (created by the row number). In essense
+it is the same thing, but if this dataset has to be joined with another
+related dataset that contains the original IDs, then we should not
+remove the ID column at all.
+
+``` r
+cancer_sample_orig <- cancer_sample_tidy %>%
+  mutate(ID=row_number()) %>%
+  select(ID, everything()) # put the ID column first
+head(cancer_sample_orig)
+```
+
+    ## # A tibble: 6 × 32
+    ##      ID diagnosis radius_mean texture_mean perimeter_mean area_mean
+    ##   <int> <chr>           <dbl>        <dbl>          <dbl>     <dbl>
+    ## 1     1 M                18.0         10.4          123.      1001 
+    ## 2     2 M                20.6         17.8          133.      1326 
+    ## 3     3 M                19.7         21.2          130       1203 
+    ## 4     4 M                11.4         20.4           77.6      386.
+    ## 5     5 M                20.3         14.3          135.      1297 
+    ## 6     6 M                12.4         15.7           82.6      477.
+    ## # … with 26 more variables: smoothness_mean <dbl>, compactness_mean <dbl>,
+    ## #   concavity_mean <dbl>, concave_points_mean <dbl>, symmetry_mean <dbl>,
+    ## #   fractal_dimension_mean <dbl>, radius_se <dbl>, texture_se <dbl>,
+    ## #   perimeter_se <dbl>, area_se <dbl>, smoothness_se <dbl>,
+    ## #   compactness_se <dbl>, concavity_se <dbl>, concave_points_se <dbl>,
+    ## #   symmetry_se <dbl>, fractal_dimension_se <dbl>, radius_worst <dbl>,
+    ## #   texture_worst <dbl>, perimeter_worst <dbl>, area_worst <dbl>, …
 
 **Explanation**
 
-Initially, our data was tidy. Then, we combined two numeric columns into
-one column of type `chr`. The resulting dataset was untidy because each
-column did not represent a single variable (our `area_worst_se` column
-contained two variables). The untidy column became type `chr` since we
-combined them with a string separator `","`. We tidy’d the data up again
-by separating the two variables, `area_worst` and `area_se`, into their
-own columns. We ensured that the two columns had the correct type by
-converting them from `chr` to `dbl`.
+Initially, our data was untidy because the `ID` column was not a
+variable. To tidy it, we removed the `ID` column. To untidy it back, we
+added back an `ID` column. Since we couldn’t recover the original ID
+values from our tidy dataset, we created an `ID` column with different
+uniquely identifying numbers by using the row number.
 
 ## 2.3 Narrowing down research questions (5 points)
 
@@ -628,29 +660,45 @@ will also give us clearer signals for predicting the diagnosis.
 
 ``` r
 cancer_sample %>%
-  mutate(is_malignant = case_when(
+  # drop the ID column
+  select(-ID) %>% 
+  # turn diagnosis into a binary outcome
+  mutate(is_malignant = case_when( 
     diagnosis == "M" ~ 1,
     TRUE ~ 0
-  )) # TODO
+  )) %>%
+  # drop the diagnosis column since we have is_malignant now
+  select(-diagnosis) %>% 
+  # put is_malignant first and sort the rest of the columns alphabetically
+  # this ensures that each type of measurement is grouped together 
+  # e.g., all radius-related columns are together
+  select(is_malignant, sort(names(.))) %>%
+  # ensure that all numeric values are of the same type
+  # convert everything to double for consistent types
+  mutate_if(is.numeric, as.double) %>%
+  # group by malignancy
+  group_by(is_malignant) %>%
+  head(10)
 ```
 
-    ## # A tibble: 569 × 33
-    ##          ID diagnosis radius_mean texture_mean perimeter_mean area_mean
-    ##       <dbl> <chr>           <dbl>        <dbl>          <dbl>     <dbl>
-    ##  1   842302 M                18.0         10.4          123.      1001 
-    ##  2   842517 M                20.6         17.8          133.      1326 
-    ##  3 84300903 M                19.7         21.2          130       1203 
-    ##  4 84348301 M                11.4         20.4           77.6      386.
-    ##  5 84358402 M                20.3         14.3          135.      1297 
-    ##  6   843786 M                12.4         15.7           82.6      477.
-    ##  7   844359 M                18.2         20.0          120.      1040 
-    ##  8 84458202 M                13.7         20.8           90.2      578.
-    ##  9   844981 M                13           21.8           87.5      520.
-    ## 10 84501001 M                12.5         24.0           84.0      476.
-    ## # … with 559 more rows, and 27 more variables: smoothness_mean <dbl>,
-    ## #   compactness_mean <dbl>, concavity_mean <dbl>, concave_points_mean <dbl>,
-    ## #   symmetry_mean <dbl>, fractal_dimension_mean <dbl>, radius_se <dbl>,
-    ## #   texture_se <dbl>, perimeter_se <dbl>, area_se <dbl>, smoothness_se <dbl>,
-    ## #   compactness_se <dbl>, concavity_se <dbl>, concave_points_se <dbl>,
-    ## #   symmetry_se <dbl>, fractal_dimension_se <dbl>, radius_worst <dbl>,
-    ## #   texture_worst <dbl>, perimeter_worst <dbl>, area_worst <dbl>, …
+    ## # A tibble: 10 × 31
+    ## # Groups:   is_malignant [1]
+    ##    is_malignant area_mean area_se area_worst compactness_mean compactness_se
+    ##           <dbl>     <dbl>   <dbl>      <dbl>            <dbl>          <dbl>
+    ##  1            1     1001    153.       2019            0.278          0.0490
+    ##  2            1     1326     74.1      1956            0.0786         0.0131
+    ##  3            1     1203     94.0      1709            0.160          0.0401
+    ##  4            1      386.    27.2       568.           0.284          0.0746
+    ##  5            1     1297     94.4      1575            0.133          0.0246
+    ##  6            1      477.    27.2       742.           0.17           0.0334
+    ##  7            1     1040     53.9      1606            0.109          0.0138
+    ##  8            1      578.    51.0       897            0.164          0.0303
+    ##  9            1      520.    24.3       739.           0.193          0.0350
+    ## 10            1      476.    23.9       711.           0.240          0.0722
+    ## # … with 25 more variables: compactness_worst <dbl>, concave_points_mean <dbl>,
+    ## #   concave_points_se <dbl>, concave_points_worst <dbl>, concavity_mean <dbl>,
+    ## #   concavity_se <dbl>, concavity_worst <dbl>, fractal_dimension_mean <dbl>,
+    ## #   fractal_dimension_se <dbl>, fractal_dimension_worst <dbl>,
+    ## #   perimeter_mean <dbl>, perimeter_se <dbl>, perimeter_worst <dbl>,
+    ## #   radius_mean <dbl>, radius_se <dbl>, radius_worst <dbl>,
+    ## #   smoothness_mean <dbl>, smoothness_se <dbl>, smoothness_worst <dbl>, …

@@ -296,57 +296,57 @@ cancer_sample %>%
   sum()
 ```
 
+Let's also check that the rows are all unique
+```{r}
+is_equal <- distinct(cancer_sample) == cancer_sample
+all(is_equal) # are all values in is_equal TRUE?
+```
+
 Evaluating tidyness:
 
-* Each row is an observation: Each row is identified by an `ID`, and has values for each of the measurements.
-* Each column is a variable: Each column is either a measurement (the `dbl` type columns), or `ID`, or a categorical outcome (`diagnosis`).
+* Each row is an observation: Each row is identified by an `ID`, and each row is unique.
+* Each column is a variable: All columns other than `ID` are variables. `diagnosis` is a categorical variable, and each of the columns ending in `_mean`, `_worst`, or `_se` are numeric variables representing different measurements.
 * Each cell is a value: As there are no NA values, and each cell is either a `dbl` or a `chr`, each cell indeed contains a value.
 
-**We conclude that our data is tidy.**
+**We conclude that our data is untidy** due to the presence of the `ID` column.
 
 ## 2.2 Tidy-ing or untidy-ing the data (5 points)
 
-Since our data is already tidy, let's untidy it. We'll do this by combining the columns `area_worst` and `area_se`.
+Since our data is untidy, we will first tidy it, then untidy it back to its original state.
 
-**Original tidy dataset**
-
+**BEFORE: Original untidy dataset**
 ```{r}
-# displaying columns for tidy data (original dataset)
-cancer_sample %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
-  head(10)
+head(cancer_sample)
 ```
 
-**BEFORE: Untidy data**
+**AFTER: Tidy dataset**
+To tidy our dataset, we will just remove the `ID` column.
 
 ```{r}
-# untidying the data and displaying the new untidy column
-(cancer_sample_untidy <- cancer_sample %>%
-  unite(col="area_worst_se", c(area_worst, area_se), sep=",") %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst_se"))) %>% 
-  head(10)
+cancer_sample_tidy <- cancer_sample %>%
+  select(-ID) # select everything except ID
+head(cancer_sample_tidy)
 ```
 
-**AFTER: Tidy data (again)**
-
-To tidy the data again, we need to:
-1. Split the `area_worst_se` column into `area_worst` and `area_se` by the `,` separator, and
-2. Convert new `area_worst` and `area_se` columns from type `chr` to `dbl`. 
-
-Note on type conversion: Since we know that there are no NA values and each entry in the `area_worst_se` column is guaranteed to be in the format `[numeric][comma][numeric]`, we can safely separate and then convert the types.
+We see that `cancer_sample_tidy` has all the same data as `cancer_sample` but without `ID`. We can also verify this by looking at its columns
 
 ```{r}
-# tidying back the untidy data
-(cancer_sample_tidy <- cancer_sample_untidy %>%
-  separate("area_worst_se", into = c("area_worst", "area_se"), sep=",") %>%
-  mutate(across(c("area_worst", "area_se"), as.numeric))) %>%
-  select(c("ID", "diagnosis", "area_mean", "area_worst", "area_se")) %>%
-  head(10)
+colnames(cancer_sample_tidy)
+```
+
+**Untidying it back to original state**
+Since it's not possible to recover the original ID values from `cancer_sample_tidy`, we will make a new ID column with unique values (created by the row number). In essense it is the same thing, but if this dataset has to be joined with another related dataset that contains the original IDs, then we should not remove the ID column at all.
+
+```{r}
+cancer_sample_orig <- cancer_sample_tidy %>%
+  mutate(ID=row_number()) %>%
+  select(ID, everything()) # put the ID column first
+head(cancer_sample_orig)
 ```
 
 **Explanation**
 
-Initially, our data was tidy. Then, we combined two numeric columns into one column of type `chr`. The resulting dataset was untidy because each column did not represent a single variable (our `area_worst_se` column contained two variables). The untidy column became type `chr` since we combined them with a string separator `","`. We tidy'd the data up again by separating the two variables, `area_worst` and `area_se`, into their own columns. We ensured that the two columns had the correct type by converting them from `chr` to `dbl`.
+Initially, our data was untidy because the `ID` column was not a variable. To tidy it, we removed the `ID` column. To untidy it back, we added back an `ID` column. Since we couldn't recover the original ID values from our tidy dataset, we created an `ID` column with different uniquely identifying numbers by using the row number. 
 
 ## 2.3 Narrowing down research questions (5 points)
 
@@ -360,10 +360,26 @@ The two research questions I picked are:
 This is because both of these research questions allow us to look at the relationships between all the variables, grouped by diagnosis. Since the analysis for these two questions will rely on grouping by diagnosis, it will also give us clearer signals for predicting the diagnosis.
 
 ### Refined dataset
+
 ```{r}
 cancer_sample %>%
-  mutate(is_malignant = case_when(
+  # drop the ID column
+  select(-ID) %>% 
+  # turn diagnosis into a binary outcome
+  mutate(is_malignant = case_when( 
     diagnosis == "M" ~ 1,
     TRUE ~ 0
-  )) # TODO
+  )) %>%
+  # drop the diagnosis column since we have is_malignant now
+  select(-diagnosis) %>% 
+  # put is_malignant first and sort the rest of the columns alphabetically
+  # this ensures that each type of measurement is grouped together 
+  # e.g., all radius-related columns are together
+  select(is_malignant, sort(names(.))) %>%
+  # ensure that all numeric values are of the same type
+  # convert everything to double for consistent types
+  mutate_if(is.numeric, as.double) %>%
+  # group by malignancy
+  group_by(is_malignant) %>%
+  head(10)
 ```
