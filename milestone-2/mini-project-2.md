@@ -113,7 +113,7 @@ from an existing numerical variable. You can use this new variable in
 the other tasks\! An example: age in years into “child, teen, adult,
 senior”.
 
-We will group the `radius_mean` into small, mediu, and large. First
+We will group the `radius_mean` into small, medium, and large. First
 let’s take a look at how this column is distributed.
 
 ``` r
@@ -642,12 +642,12 @@ uniquely identifying numbers by using the row number.
 
 The two research questions I picked are:
 
-2 .What are the relationships between each pair of nucleus measurements
-among malignant and benign diagnoses? For example, among malignant
-diagnoses, what is the relationship between surface area and radius?
-What about among benign diagnoses? 4. Can we accurately predict whether
-a diagnosis will be benign or malignant using the provided measurements
-from images of nuclei?
+2.  What are the relationships between each pair of nucleus measurements
+    among malignant and benign diagnoses? For example, among malignant
+    diagnoses, what is the relationship between surface area and radius?
+    What about among benign diagnoses?
+3.  Can we accurately predict whether a diagnosis will be benign or
+    malignant using the provided measurements from images of nuclei?
 
 ### Explanation
 
