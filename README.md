@@ -75,8 +75,8 @@ Any additional files that are created, written to, or read from within an `.Rmd`
 
 ## File List
 
-- **`README.md`:** This file. It contains information about the milestones and files in the repository.
 - **`milestone-1`:** The directory containing the `.Rmd` source code file, `.md` knitted file, and assets (images and plots) for the milestone 1 submission.
 - **`milestone-2`:** The directory containing the `.Rmd` source code file, `.md` knitted file, and assets (images and plots) for the milestone 2 submission.
 - **`milestone-3`:** The directory containing the `.Rmd` source code file, `.md` knitted file, and assets (images and plots) for the milestone 3 submission.
 - **`output`:** The directory containing data-storing files that were created in any of the three milestones (e.g., `.csv` and `.rds` files)
+- **`README.md`:** This file. It contains information about the milestones and files in the repository.

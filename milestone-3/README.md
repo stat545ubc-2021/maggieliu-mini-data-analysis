@@ -15,3 +15,4 @@ The learning objectives for this milestone were:
 - **`mini-project-3_files/`:** This folder contains the assets (images and plots) for all knitted markdown files related to Milestone 3.
 - **`mini-project-3.Rmd`:** The R markdown file containing the source code for the Milestone 2 submission.
 - **`mini-project-3.md`:** The compiled markdown file created by knitting the R markdown file `mini-project-3.Rmd`
+- **`README.md`:** This file. It contains information about the contents of this folder.
