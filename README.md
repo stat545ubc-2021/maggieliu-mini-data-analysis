@@ -27,19 +27,26 @@ Below are brief descriptions of each milestone in this project, along with a che
 
 You can interact with this repository by either browsing or running some of the code yourself! **What do you want to do?**
 
-**I want to browse** 🔍
+🔍 **I want to browse**
 
 Each `milestone-i` directory contains a corresponding `mini-project-i.md` file. This `.md` file was created by knitting the corresponding `.Rmd` file in the same directory. To browse the code, output, and analysis in each milestone, simply take a look at the `.md` file!
 
-**I want to run the code** 💻
+💻 **I want to run the code**
 
-First, ensure that you have the `git` command line tool installed. You can find instructions on how to do that [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+First, ensure that you have the `git` command line tool installed.
+
+- [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 Clone this repo to your local computer. Navigate to the directory where you want to store this repo locally, and run
 
 ```
 git clone https://github.com/stat545ubc-2021/maggieliu-mini-data-analysis.git
 ```
+
+This repository is written in R. It's best to interact with this repository using R Studio.
+
+- [Install R](https://www.r-project.org/)
+- [Install R Studio](https://www.rstudio.com/products/rstudio/download/)
 
 Make sure you have the necessary R packages. The following code chunk installs all the necessary packages. Use the lines you need to install the packages you're missing (or install all of them if it's your first time in R).
 
@@ -60,7 +67,7 @@ caret
 stringr
 ```
 
-Now that you've installed all the packages, you're ready to run some code! Each `milestone-i` directory contains a correpsonding `mini-project-i.Rmd` file. The `.Rmd` file contains all the source code for that milestone. Open up the `.Rmd` file in RStudio and click the "knit" button. Or press `Command+Shift+K` (mac) or `Control+Shift+K` (windows) to knit.
+Now that you've installed all the packages, you're ready to run some code! Each `milestone-i` directory contains a correpsonding `mini-project-i.Rmd` file. The `.Rmd` file contains all the source code for that milestone. Open up the `.Rmd` file in RStudio and click the "knit" button. Or press `Command+Shift+K` (Mac) or `Control+Shift+K` (Windows) to knit.
 
 If you wish, you can also run individual code chunks within the `.Rmd` file.
 
