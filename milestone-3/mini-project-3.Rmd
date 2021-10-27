@@ -260,11 +260,9 @@ cancer_sample_radius_mean_summary <- cancer_sample %>%
     variance_radius_mean=var(radius_mean),
     iqr_radius_mean=IQR(radius_mean)
   ) %>%
-  column_to_rownames(var="diagnosis") %>%
-  t(.) %>%
-  as.data.frame(.)
+  pivot_longer(cols=-diagnosis) %>% 
+  pivot_wider(id_cols = name, names_from = diagnosis, values_from = value )
 
-cancer_sample_radius_mean_summary <- tibble::rownames_to_column(cancer_sample_radius_mean_summary, "metric")
 cancer_sample_radius_mean_summary
 ```
 

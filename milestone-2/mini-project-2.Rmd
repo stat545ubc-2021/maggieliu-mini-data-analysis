@@ -179,8 +179,8 @@ cancer_sample %>%
     variance_radius_se=var(radius_se),
     iqr_radius_se=IQR(radius_se)
   ) %>%
-  column_to_rownames(var="diagnosis") %>%
-  t(.)
+  pivot_longer(cols=-diagnosis) %>% 
+  pivot_wider(id_cols = name, names_from = diagnosis, values_from = value )
 ```
 
 **Graphing:** (3) Make a graph where it makes sense to customize the alpha transparency.

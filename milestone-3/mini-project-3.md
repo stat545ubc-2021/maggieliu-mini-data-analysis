@@ -420,21 +420,21 @@ cancer_sample_radius_mean_summary <- cancer_sample %>%
     variance_radius_mean=var(radius_mean),
     iqr_radius_mean=IQR(radius_mean)
   ) %>%
-  column_to_rownames(var="diagnosis") %>%
-  t(.) %>%
-  as.data.frame(.)
+  pivot_longer(cols=-diagnosis) %>% 
+  pivot_wider(id_cols = name, names_from = diagnosis, values_from = value )
 
-cancer_sample_radius_mean_summary <- tibble::rownames_to_column(cancer_sample_radius_mean_summary, "metric")
 cancer_sample_radius_mean_summary
 ```
 
-    ##                  metric         B        M
-    ## 1 range_min_radius_mean  6.981000 10.95000
-    ## 2 range_max_radius_mean 17.850000 28.11000
-    ## 3      mean_radius_mean 12.146524 17.46283
-    ## 4    median_radius_mean 12.200000 17.32500
-    ## 5  variance_radius_mean  3.170222 10.26543
-    ## 6       iqr_radius_mean  2.290000  4.51500
+    ## # A tibble: 6 × 3
+    ##   name                      B     M
+    ##   <chr>                 <dbl> <dbl>
+    ## 1 range_min_radius_mean  6.98 11.0 
+    ## 2 range_max_radius_mean 17.8  28.1 
+    ## 3 mean_radius_mean      12.1  17.5 
+    ## 4 median_radius_mean    12.2  17.3 
+    ## 5 variance_radius_mean   3.17 10.3 
+    ## 6 iqr_radius_mean        2.29  4.51
 
 Now, let’s write `cancer_sample_summary` to a csv file in the `output`
 directory.

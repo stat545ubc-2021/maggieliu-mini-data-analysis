@@ -276,17 +276,19 @@ cancer_sample %>%
     variance_radius_se=var(radius_se),
     iqr_radius_se=IQR(radius_se)
   ) %>%
-  column_to_rownames(var="diagnosis") %>%
-  t(.)
+  pivot_longer(cols=-diagnosis) %>% 
+  pivot_wider(id_cols = name, names_from = diagnosis, values_from = value )
 ```
 
-    ##                              B         M
-    ## range_min_radius_se 0.11150000 0.1938000
-    ## range_max_radius_se 0.88110000 2.8730000
-    ## mean_radius_se      0.28408235 0.6090825
-    ## median_radius_se    0.25750000 0.5472000
-    ## variance_radius_se  0.01267192 0.1190516
-    ## iqr_radius_se       0.13430000 0.3669250
+    ## # A tibble: 6 × 3
+    ##   name                     B     M
+    ##   <chr>                <dbl> <dbl>
+    ## 1 range_min_radius_se 0.112  0.194
+    ## 2 range_max_radius_se 0.881  2.87 
+    ## 3 mean_radius_se      0.284  0.609
+    ## 4 median_radius_se    0.258  0.547
+    ## 5 variance_radius_se  0.0127 0.119
+    ## 6 iqr_radius_se       0.134  0.367
 
 **Graphing:** (3) Make a graph where it makes sense to customize the
 alpha transparency.
